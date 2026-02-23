@@ -133,14 +133,65 @@
 </div>
 
 <script>
-    // Firebase Setup
-    const firebaseConfig = { apiKey: "AIza...", databaseURL: "https://your-db.firebaseio.com", projectId: "your-id" };
-    firebase.initializeApp(firebaseConfig);
+    // 1. FIREBASE CONFIG - Kun baay'ee murteessaa dha!
+    // Firebase Console keessaa API Key kee as galchi
+    const firebaseConfig = {
+        apiKey: "AIzaSy...", 
+        authDomain: "project-id.firebaseapp.com",
+        databaseURL: "https://project-id-default-rtdb.firebaseio.com", // Database URL kee as galchi
+        projectId: "project-id",
+        storageBucket: "project-id.appspot.com",
+        messagingSenderId: "...",
+        appId: "..."
+    };
+
+    // Firebase Initialize gochuu
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
     let activeFolder = "Mechatronics";
 
-    // Navigation & Login
+    // 2. SAVE FUNCTION - Isni kun ragaa kee hunda walitti qaba
+    function saveData() {
+        const content = document.getElementById('nb-area').innerHTML;
+        
+        // Mallattoo loading agarsiisuuf
+        const saveBtn = document.querySelector('.save-btn');
+        const originalText = saveBtn.innerText;
+        saveBtn.innerText = "Saving... ⏳";
+        saveBtn.style.background = "#fbbf24";
+
+        // Gara Firebase-itti erguu (Folder folderiin kuusa)
+        db.ref('ams_v6/' + activeFolder).set(content)
+        .then(() => {
+            saveBtn.innerText = "Saved ✅";
+            saveBtn.style.background = "#10b981";
+            setTimeout(() => {
+                saveBtn.innerText = originalText;
+                saveBtn.style.background = "#10b981";
+            }, 2000);
+        })
+        .catch((error) => {
+            alert("Ragaa kuusuun hin danda'amne: " + error.message);
+            saveBtn.innerText = "Error ❌";
+            saveBtn.style.background = "#ef4444";
+        });
+    }
+
+    // 3. LOAD FUNCTION - Yeroo folder jijjiirtu ragaa fida
+    function loadData(folder) {
+        db.ref('ams_v6/' + folder).once('value', (snapshot) => {
+            if (snapshot.exists()) {
+                document.getElementById('nb-area').innerHTML = snapshot.val();
+            } else {
+                document.getElementById('nb-area').innerHTML = `<h3>${folder} Notebook</h3><hr><p>Barreeffama haaraa asitti jalqabi...</p>`;
+            }
+        });
+    }
+
+    // Login logic
     function checkLogin() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
@@ -149,19 +200,14 @@
             document.getElementById('app-content').style.display = 'flex';
             sessionStorage.setItem("ams_full_auth", "true");
             loadData(activeFolder);
-        } else { document.getElementById('error').innerText = "Crendentials dogoggora!"; }
+        } else {
+            document.getElementById('error').innerText = "Email ykn Password dogoggora!";
+        }
     }
 
-    function showP(pId, bId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(pId).classList.add('active');
-        document.getElementById(bId).classList.add('active');
-    }
-
-    // Folder Logic
+    // Folder switch logic
     function switchFolder(folder, btnId) {
-        saveData(); // Save current before switch
+        saveData(); // switch gochuun dura isa jiru save godha
         activeFolder = folder;
         document.querySelectorAll('.f-tab').forEach(t => t.classList.remove('active'));
         document.getElementById(btnId).classList.add('active');
@@ -169,77 +215,15 @@
         loadData(folder);
     }
 
-    // Sketch Pad Logic (Samsung A14 Touch Friendly)
-    const canvas = document.getElementById('circuitCanvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-
-    function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = 400; }
-    window.addEventListener('resize', resizeCanvas); resizeCanvas();
-
-    canvas.addEventListener('touchstart', (e) => { drawing = true; ctx.beginPath(); e.preventDefault(); }, {passive: false});
-    canvas.addEventListener('touchend', () => { drawing = false; });
-    canvas.addEventListener('touchmove', (e) => {
-        if(!drawing) return;
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-        ctx.stroke();
-        e.preventDefault();
-    }, {passive: false});
-
-    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-
-    // Calculations
-    function calcO() {
-        let v = document.getElementById('v').value, i = document.getElementById('i').value, r = document.getElementById('r').value;
-        if(i && r && !v) document.getElementById('v').value = (i * r).toFixed(2);
-        else if(v && r && !i) document.getElementById('i').value = (v / r).toFixed(2);
-        else if(v && i && !r) document.getElementById('r').value = (v / i).toFixed(2);
-    }
-
-    function cableSize() {
-        let a = document.getElementById('ampIn').value;
-        let s = a <= 15 ? "1.5" : a <= 22 ? "2.5" : a <= 32 ? "4.0" : a <= 45 ? "6.0" : "10.0+";
-        document.getElementById('cableRes').innerText = "Recommended: " + s + " mm²";
-    }
-
-    function calcConst() {
-        let ar = document.getElementById('area').value, de = document.getElementById('depth').value;
-        let vol = ar * de;
-        document.getElementById('constRes').innerText = `Volume: ${vol.toFixed(2)} m³ | Cement: ${Math.ceil(vol * 6.5)} Bags`;
-    }
-
-    function logToNotebook() {
-        const v = document.getElementById('mv').value, i = document.getElementById('mi').value, r = document.getElementById('mr').value;
-        const entry = `<div style="border-left:5px solid var(--primary); padding:10px; margin:10px 0; background:#f8fafc;">
-            <b>LOG [${new Date().toLocaleTimeString()}]:</b> ${v}V | ${i}A | ${r}Ω </div>`;
-        document.getElementById('nb-area').innerHTML += entry;
-        alert("Added to Notebook!");
-        showP('p1', 'b1');
-    }
-
-    // Cloud Data
-    function saveData() {
-        const data = document.getElementById('nb-area').innerHTML;
-        db.ref('ams_v6/' + activeFolder).set(data).then(() => {
-            console.log("Auto-saved " + activeFolder);
-        });
-    }
-
-    function loadData(folder) {
-        db.ref('ams_v6/' + folder).once('value', (s) => {
-            document.getElementById('nb-area').innerHTML = s.val() || `<h3>${folder} Notebook</h3><hr><p>Barreeffama haaraa jalqabi...</p>`;
-        });
-    }
-
-    function logout() { sessionStorage.clear(); location.reload(); }
-
-    window.onload = () => { if(sessionStorage.getItem("ams_full_auth") === "true") checkLogin(); };
+    window.onload = () => {
+        if(sessionStorage.getItem("ams_full_auth") === "true") {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app-content').style.display = 'flex';
+            loadData(activeFolder);
+        }
+    };
 </script>
+
 </body>
 </html>
 
