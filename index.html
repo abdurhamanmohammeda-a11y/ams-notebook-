@@ -1,220 +1,208 @@
+
 <!DOCTYPE html>
 <html lang="or">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMS - Notebook & Automation Cloud</title>
-    <link rel="manifest" href="manifest.json">
+    <title>AMS - Mechatronics & Construction Hub</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    
     <style>
         :root {
-            --primary: #0f172a;
-            --accent: #38bdf8;
-            --paper: #ffffff;
+            --dark: #0f172a;
+            --blue: #38bdf8;
             --success: #10b981;
+            --card-bg: #1e293b;
         }
 
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            height: 100vh;
-            background: #f1f5f9;
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f1f5f9; overflow-x: hidden; }
+
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--dark); display: flex; align-items: center;
+            justify-content: center; z-index: 10000;
+        }
+        .login-box {
+            background: var(--card-bg); padding: 40px; border-radius: 15px;
+            text-align: center; width: 320px; color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .login-box input {
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px;
+            border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box;
+        }
+        .login-box button {
+            width: 100%; padding: 12px; background: var(--blue);
+            border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
         }
 
-        /* Sidebar */
+        /* App Layout */
+        #app-content { display: none; }
         .sidebar {
-            width: 280px;
-            background: var(--primary);
-            color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+            width: 260px; background: var(--dark); color: white;
+            height: 100vh; position: fixed; display: flex; flex-direction: column;
+            padding: 20px; box-sizing: border-box;
         }
+        .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; }
 
-        .sidebar h2 { color: var(--accent); font-size: 18px; text-align: center; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-
-        .nav-tabs { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
-
-        .tab-btn {
-            padding: 12px;
-            background: #1e293b;
-            color: #94a3b8;
-            border: 1px solid #334155;
-            cursor: pointer;
-            border-radius: 8px;
-            text-align: left;
-            font-weight: bold;
-            transition: 0.3s;
+        /* Navigation Buttons */
+        .nav-btn {
+            background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+            padding: 12px; margin-bottom: 10px; border-radius: 8px;
+            cursor: pointer; text-align: left; font-weight: bold; width: 100%;
         }
+        .nav-btn.active { background: var(--blue); color: var(--dark); border-color: var(--blue); }
 
-        .tab-btn.active { background: var(--accent); color: var(--primary); }
-
-        /* Main Content */
-        .main-content { flex-grow: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+        /* Pages */
+        .page { display: none; }
+        .page.active { display: block; }
 
         /* Notebook Style */
-        .notebook-page {
-            width: 100%;
-            max-width: 850px;
-            background: var(--paper);
-            min-height: 1200px;
-            padding: 50px;
-            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
-            outline: none;
-            display: none;
-            font-size: 18px;
-            line-height: 1.8;
+        .notebook-container {
+            background: white; width: 100%; max-width: 850px;
+            min-height: 1200px; padding: 60px; border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1); outline: none;
+            font-size: 18px; line-height: 1.8; margin: 0 auto;
         }
 
-        .notebook-page.active { display: block; }
+        /* Instrumentation Style */
+        .instrument-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .tool-card { background: white; padding: 20px; border-radius: 12px; border-top: 4px solid var(--blue); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .calc-input { width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin: 5px; }
 
-        /* Instrumentation & Ohm's Law */
-        .tool-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 850px;
-        }
-
-        .calc-input {
-            padding: 10px;
-            margin: 5px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            width: 80px;
-        }
-
-        .db-status {
-            font-size: 12px;
-            padding: 5px 10px;
-            border-radius: 20px;
-            background: #334155;
-            color: #94a3b8;
-        }
-
-        .floating-save {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        .save-floating {
+            position: fixed; bottom: 30px; right: 30px;
+            background: var(--success); color: white; border: none;
+            padding: 15px 30px; border-radius: 50px; cursor: pointer;
+            font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>AMS SOLUTIONS</h2>
-    <div class="db-status" id="cloudStatus">☁️ Database: Local Mode</div>
-    
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="showPage('notebook-page', this)">📝 Engineering Notebook</button>
-        <button class="tab-btn" onclick="showPage('instrument-page', this)">🛠 Ohm's Law & Tools</button>
-    </div>
-
-    <div style="margin-top: 30px;">
-        <h4 style="font-size: 12px; color: var(--accent);">PROJECT CALENDAR</h4>
-        <input type="date" id="pDate" style="width:100%; padding:8px; border-radius:5px; border:none;">
+<div id="login-overlay">
+    <div class="login-box">
+        <h2 style="color: var(--blue);">AMS WORKSTATION</h2>
+        <input type="email" id="email" placeholder="Email Address">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="checkLogin()">Enter</button>
+        <p id="error" style="color: #ef4444; font-size: 12px; margin-top: 10px;"></p>
     </div>
 </div>
 
-<div class="main-content">
-    <div id="notebook-page" class="notebook-page active" contenteditable="true">
-        <h1 style="text-align: center;">Lab Notebook</h1>
-        <hr>
-        <p>Barreeffama kee asirratti jalqabi...</p>
+<div id="app-content">
+    <div class="sidebar">
+        <h3>AMS Solutions</h3>
+        <p style="font-size: 11px; color: var(--blue);">Mechatronics & Construction</p>
+        <hr style="width: 100%; border: 0.5px solid #334155; margin: 20px 0;">
+        <button class="nav-btn active" id="btn1" onclick="switchPage('notebook-page', 'btn1')">📝 Notebook</button>
+        <button class="nav-btn" id="btn2" onclick="switchPage('instrument-page', 'btn2')">🛠 Instrumentation</button>
+        <button class="nav-btn" onclick="logout()" style="margin-top: auto; color: #ef4444;">Logout</button>
     </div>
 
-    <div id="instrument-page" class="notebook-page">
-        <h1>Instrumentation Hub</h1>
-        <hr>
-        
-        <div class="tool-card">
-            <h3>📐 Ohm's Law Calculator ($V = I \times R$)</h3>
-            
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 15px;">
-                <label>V (Volt):</label> <input type="number" id="volt" class="calc-input" oninput="calcOhms('V')">
-                <label>I (Amp):</label> <input type="number" id="amp" class="calc-input" oninput="calcOhms('I')">
-                <label>R (Ohm):</label> <input type="number" id="res" class="calc-input" oninput="calcOhms('R')">
-                <button onclick="clearCalc()" style="padding: 5px 10px;">Clear</button>
+    <div class="main-content">
+        <div id="notebook-page" class="page active">
+            <div id="notebook-area" class="notebook-container" contenteditable="true">
+                <h1 style="text-align: center;">Engineering Notebook</h1>
+                <hr>
+                <p>Barreeffama kee asitti jalqabi...</p>
             </div>
-            <p id="calcResult" style="color: var(--success); font-weight: bold; margin-top: 10px;"></p>
         </div>
 
-        <div class="tool-card">
-            <h3>🧩 Industrial Components</h3>
-            <p>PLC: S7-1200 <br> Status: Connected</p>
+        <div id="instrument-page" class="page">
+            <h2 style="color: var(--dark);">Industrial Instrumentation</h2>
+            <div class="instrument-grid">
+                <div class="tool-card">
+                    <h3>📐 Ohm's Law Calculator</h3>
+                    
+                    V: <input type="number" id="v" class="calc-input" oninput="calcOhms()"> <br>
+                    I: <input type="number" id="i" class="calc-input" oninput="calcOhms()"> <br>
+                    R: <input type="number" id="r" class="calc-input" oninput="calcOhms()">
+                </div>
+                <div class="tool-card">
+                    <h3>🏗 Construction (Volume)</h3>
+                    Length: <input type="number" id="len" class="calc-input" oninput="calcVol()"> <br>
+                    Width: <input type="number" id="wid" class="calc-input" oninput="calcVol()"> <br>
+                    Depth: <input type="number" id="dep" class="calc-input" oninput="calcVol()">
+                    <p id="volResult" style="color: var(--success); font-weight: bold;">Volume: 0.00 m³</p>
+                </div>
+                <div class="tool-card">
+                    <h3>🧩 Automation (PLC)</h3>
+                    <p>Controller: S7-1500</p>
+                    <p>Status: <span style="color: var(--success);">Running</span></p>
+                    
+                </div>
+            </div>
         </div>
     </div>
+    <button class="save-floating" onclick="saveData()">💾 SAVE DATA</button>
 </div>
-
-<button class="floating-save" onclick="saveToCloud()">💾 SAVE TO DATABASE</button>
 
 <script>
-    // PAGE NAVIGATION
-    function showPage(pageId, btn) {
-        document.querySelectorAll('.notebook-page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
-        btn.classList.add('active');
-    }
+    // Firebase Config (Replace with your actual keys)
+    const firebaseConfig = { apiKey: "AIza...", databaseURL: "https://your-db.firebaseio.com", projectId: "your-id" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    // OHM'S LAW LOGIC
-    function calcOhms(lastChanged) {
-        let v = parseFloat(document.getElementById('volt').value);
-        let i = parseFloat(document.getElementById('amp').value);
-        let r = parseFloat(document.getElementById('res').value);
-        let resText = document.getElementById('calcResult');
-
-        if (lastChanged === 'V' && i && r) {
-            v = i * r; document.getElementById('volt').value = v.toFixed(2);
-        } else if (lastChanged === 'I' && v && r) {
-            i = v / r; document.getElementById('amp').value = i.toFixed(2);
-        } else if (lastChanged === 'R' && v && i) {
-            r = v / i; document.getElementById('res').value = r.toFixed(2);
+    function checkLogin() {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('password').value;
+        if(email === "Abdurhamanmohammeda@gmail.com" && pass === "Abdu@1234") {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            sessionStorage.setItem("ams_auth", "true");
+            loadData();
+        } else {
+            document.getElementById('error').innerText = "Email ykn Password dogoggora!";
         }
-        resText.innerText = `Result Updated: $$V = I \cdot R$$`;
     }
 
-    function clearCalc() {
-        document.getElementById('volt').value = '';
-        document.getElementById('amp').value = '';
-        document.getElementById('res').value = '';
-        document.getElementById('calcResult').innerText = '';
+    function switchPage(pageId, btnId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.getElementById(btnId).classList.add('active');
     }
 
-    // DATABASE LOGIC (Local + Cloud Simulation)
-    function saveToCloud() {
-        const data = document.getElementById('notebook-page').innerHTML;
-        // Local Storage (Always works)
-        localStorage.setItem('AMS_DB_V3', data);
-        
-        // Cloud Simulation (Hamma ati Firebase/Supabase connect goottutti)
-        document.getElementById('cloudStatus').innerText = "☁️ Syncing to Cloud...";
-        document.getElementById('cloudStatus').style.color = "#10b981";
-
-        setTimeout(() => {
-            alert("Ragaan kee Database irratti kuusameera!");
-            document.getElementById('cloudStatus').innerText = "☁️ Database: Synced";
-        }, 1500);
+    function calcOhms() {
+        let v = document.getElementById('v').value;
+        let i = document.getElementById('i').value;
+        let r = document.getElementById('r').value;
+        if(i && r && !v) document.getElementById('v').value = (i * r).toFixed(2);
+        else if(v && r && !i) document.getElementById('i').value = (v / r).toFixed(2);
+        else if(v && i && !r) document.getElementById('r').value = (v / i).toFixed(2);
     }
+
+    function calcVol() {
+        let l = document.getElementById('len').value || 0;
+        let w = document.getElementById('wid').value || 0;
+        let d = document.getElementById('dep').value || 0;
+        document.getElementById('volResult').innerText = "Volume: " + (l * w * d).toFixed(2) + " m³";
+    }
+
+    function saveData() {
+        const content = document.getElementById('notebook-area').innerHTML;
+        db.ref('ams_data').set(content).then(() => alert("Saved to Cloud!"));
+    }
+
+    function loadData() {
+        db.ref('ams_data').on('value', (snap) => {
+            if(snap.val()) document.getElementById('notebook-area').innerHTML = snap.val();
+        });
+    }
+
+    function logout() { sessionStorage.clear(); location.reload(); }
 
     window.onload = () => {
-        const saved = localStorage.getItem('AMS_DB_V3');
-        if(saved) document.getElementById('notebook-page').innerHTML = saved;
-    }
+        if(sessionStorage.getItem("ams_auth") === "true") {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            loadData();
+        }
+    };
 </script>
 
 </body>
 </html>
-
