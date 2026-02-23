@@ -3,84 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMS - Professional Workstation</title>
+    <title>AMS Ultimate - Samsung A14 Version</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     
     <style>
-        :root { 
-            --primary: #1e40af; 
-            --bg-body: #ffffff; 
-            --text-main: #1e293b;
-            --success: #10b981;
-        }
+        :root { --primary: #1e40af; --bg: #ffffff; --text: #1e293b; --success: #10b981; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        body { 
-            margin: 0; 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg-body); 
-            display: flex; 
-            flex-direction: column; /* Mobile-f akka mijaatuuf */
-            height: 100vh;
-        }
+        /* Login Screen */
+        #login-overlay { position: fixed; inset: 0; background: white; display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .login-box { width: 85%; max-width: 380px; text-align: center; }
+        .login-box input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; }
+        .login-box button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; }
 
-        /* Login Screen - Ijaa qulqulluu */
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 10000; }
-        .login-box { width: 85%; max-width: 400px; text-align: center; }
-        .login-box input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box;}
-        .login-box button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; }
-
-        /* Navigation Bar (Mobile-friendly) */
-        .nav-header { 
-            background: white; 
-            padding: 10px; 
-            display: flex; 
-            overflow-x: auto; 
-            gap: 10px; 
-            border-bottom: 2px solid #f1f5f9;
-            position: sticky; top: 0; z-index: 100;
-        }
-        .nav-btn { 
-            white-space: nowrap; 
-            padding: 12px 20px; 
-            border-radius: 30px; 
-            border: 1px solid #e2e8f0; 
-            background: #f8fafc; 
-            font-weight: 600; 
-            font-size: 14px;
-            cursor: pointer;
-        }
+        /* Top Navigation */
+        .nav-header { background: white; padding: 10px; display: flex; overflow-x: auto; gap: 8px; border-bottom: 2px solid #f1f5f9; position: sticky; top: 0; z-index: 100; }
+        .nav-btn { white-space: nowrap; padding: 12px 20px; border-radius: 30px; border: 1px solid #e2e8f0; background: #f8fafc; font-weight: 600; font-size: 14px; color: #475569; }
         .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* Notebook - FUULA BAAY'EE BAL'AA */
-        .workspace { flex-grow: 1; overflow-y: auto; padding: 10px; }
+        /* Folder Tabs for Notebook */
+        .folder-nav { display: flex; gap: 5px; padding: 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; overflow-x: auto; }
+        .f-tab { padding: 10px 15px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-size: 13px; font-weight: bold; white-space: nowrap; }
+        .f-tab.active { background: #38bdf8; color: white; border-color: #38bdf8; }
+
+        /* Content Area */
+        .workspace { flex-grow: 1; overflow-y: auto; padding: 15px; }
         .page { display: none; width: 100%; }
         .page.active { display: block; }
 
-        .notebook { 
-            background: white; 
-            width: 100%; 
-            min-height: 1500px; /* Baay'ee dheeraa */
-            padding: 30px 15px; 
-            outline: none; 
-            font-size: 20px; /* Barreeffama gurguddaa */
-            line-height: 1.6; 
-            color: #334155;
-            box-sizing: border-box;
-        }
+        /* Notebook Styles */
+        .notebook { width: 100%; min-height: 1000px; padding: 25px; outline: none; font-size: 20px; line-height: 1.6; color: #334155; box-sizing: border-box; border: 1px solid #eee; border-radius: 8px; }
 
-        /* Tools */
-        .card { background: white; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+        /* Sketch Pad (Circuit Design) */
+        #sketch-container { border: 2px dashed #cbd5e1; margin-top: 20px; border-radius: 12px; background: #fdfdfd; }
+        canvas { touch-action: none; width: 100%; height: 400px; display: block; cursor: crosshair; }
+        .sketch-tools { display: flex; justify-content: space-between; padding: 10px; background: #f1f5f9; border-top: 1px solid #cbd5e1; border-radius: 0 0 12px 12px; }
+
+        /* Tool Cards */
+        .card { background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .calc-input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 18px; box-sizing: border-box; }
         
-        /* Floating Save Button - Qubaan tuquuf mijaataa */
-        .save-btn { 
-            position: fixed; bottom: 20px; right: 20px; 
-            background: var(--success); color: white; border: none; 
-            padding: 18px 25px; border-radius: 50px; 
-            font-weight: bold; font-size: 16px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-        }
+        .save-btn { position: fixed; bottom: 25px; right: 25px; background: var(--success); color: white; border: none; padding: 20px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 500; }
         .res-box { background: #f0fdf4; padding: 15px; border-radius: 10px; color: #166534; font-weight: bold; margin-top: 10px; border: 1px solid #bbf7d0; }
     </style>
 </head>
@@ -88,45 +52,60 @@
 
 <div id="login-overlay">
     <div class="login-box">
-        <h2 style="color: var(--primary);">AMS WORKSTATION</h2>
-        <input type="email" id="email" placeholder="Email Address">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="checkLogin()">UNLOCK</button>
-        <p id="error" style="color: red; margin-top: 10px;"></p>
+        <h2 style="color: var(--primary);">AMS MASTER WORKSTATION</h2>
+        <input type="email" id="email" placeholder="Email (Abdurhamanmohammeda@gmail.com)">
+        <input type="password" id="password" placeholder="Password (Abdu@1234)">
+        <button onclick="checkLogin()">UNLOCK SYSTEM</button>
+        <p id="error" style="color: red; margin-top: 15px; font-size: 14px;"></p>
     </div>
 </div>
 
 <div id="app-content" style="display:none; flex-direction: column; height: 100vh;">
     <div class="nav-header">
-        <button class="nav-btn active" id="b1" onclick="showP('p1','b1')">📝 Notebook</button>
-        <button class="nav-btn" id="b2" onclick="showP('p2','b2')">⚡ Electrical</button>
+        <button class="nav-btn active" id="b1" onclick="showP('p1','b1')">📁 Digital Folders</button>
+        <button class="nav-btn" id="b2" onclick="showP('p2','b2')">⚡ Electrical Tool</button>
         <button class="nav-btn" id="b3" onclick="showP('p3','b3')">🏗 Construction</button>
         <button class="nav-btn" id="b4" onclick="showP('p4','b4')">📟 Multimeter</button>
-        <button onclick="logout()" style="color:red; background:none; border:none; font-weight:bold;">Logout</button>
+        <button onclick="logout()" style="border:none; background:none; color:red; font-weight:bold;">Exit</button>
     </div>
 
     <div class="workspace">
         <div id="p1" class="page active">
+            <div class="folder-nav">
+                <button class="f-tab active" id="f-mech" onclick="switchFolder('Mechatronics', 'f-mech')">⚙️ Mechatronics</button>
+                <button class="f-tab" id="f-const" onclick="switchFolder('Construction', 'f-const')">🏗️ Construction</button>
+                <button class="f-tab" id="f-daily" onclick="switchFolder('DailyLogs', 'f-daily')">📅 Daily Logs</button>
+            </div>
+            
             <div id="nb-area" class="notebook" contenteditable="true">
-                <h2 style="text-align:center;">Lab Report</h2>
+                <h3 id="folder-title">Mechatronics Notebook</h3>
                 <hr>
-                <p>Asirratti quba keetiin barreessi...</p>
+                <p>Jalqaba asirratti barreeffama kee galchi...</p>
+            </div>
+
+            <div id="sketch-container">
+                <h4 style="margin: 10px; color: var(--primary);">📐 Circuit Design Sketch Pad</h4>
+                
+                <canvas id="circuitCanvas"></canvas>
+                <div class="sketch-tools">
+                    <button onclick="clearCanvas()" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; padding:10px 20px; border-radius:10px; font-weight:bold;">Haqi (Clear)</button>
+                    <span style="font-size: 12px; color: #64748b;">Quba keetiin asitti kaasi</span>
+                </div>
             </div>
         </div>
 
         <div id="p2" class="page">
             <div class="card">
-                <h3>Ohm's Law</h3>
+                <h3>Ohm's Law Calculator</h3>
                 [attachment_0](attachment)
-                V: <input type="number" id="v" oninput="calcO()" class="calc-input" placeholder="Voltage">
-                I: <input type="number" id="i" oninput="calcO()" class="calc-input" placeholder="Current">
-                R: <input type="number" id="r" oninput="calcO()" class="calc-input" placeholder="Resistance">
+                V: <input type="number" id="v" oninput="calcO()" class="calc-input" placeholder="Volt">
+                I: <input type="number" id="i" oninput="calcO()" class="calc-input" placeholder="Ampere">
+                R: <input type="number" id="r" oninput="calcO()" class="calc-input" placeholder="Ohm">
             </div>
             <div class="card">
-                <h3>Cable Sizer</h3>
-                
-                Amps: <input type="number" id="ampIn" oninput="cableSize()" class="calc-input">
-                <div id="cableRes" class="res-box">Size: -- mm²</div>
+                <h3>Cable Sizing</h3>
+                Load Current (A): <input type="number" id="ampIn" oninput="cableSize()" class="calc-input">
+                <div id="cableRes" class="res-box">Recommended Size: -- mm²</div>
             </div>
         </div>
 
@@ -141,33 +120,36 @@
 
         <div id="p4" class="page">
             <div class="card">
-                <h3>Multimeter Log</h3>
-                [attachment_1](attachment)
-                V: <input type="number" id="mv" class="calc-input" placeholder="Volt">
-                A: <input type="number" id="mi" class="calc-input" placeholder="Amp">
-                R: <input type="number" id="mr" class="calc-input" placeholder="Ohm">
-                <button onclick="logToNotebook()" style="width:100%; padding:15px; background:var(--primary); color:white; border-radius:10px; border:none; font-weight:bold;">Add to Notebook</button>
+                <h3>📟 Multimeter Records</h3>
+                Volt: <input type="number" id="mv" class="calc-input">
+                Amp: <input type="number" id="mi" class="calc-input">
+                Ohm: <input type="number" id="mr" class="calc-input">
+                <button onclick="logToNotebook()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-top:10px;">Push to Notebook</button>
             </div>
         </div>
     </div>
     
-    <button class="save-btn" onclick="saveData()">💾 SAVE ALL</button>
+    <button class="save-btn" onclick="saveData()">💾 SAVE TO CLOUD</button>
 </div>
 
 <script>
+    // Firebase Setup
     const firebaseConfig = { apiKey: "AIza...", databaseURL: "https://your-db.firebaseio.com", projectId: "your-id" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    let activeFolder = "Mechatronics";
+
+    // Navigation & Login
     function checkLogin() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
         if(e === "Abdurhamanmohammeda@gmail.com" && p === "Abdu@1234") {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').style.display = 'flex';
-            sessionStorage.setItem("ams_final_auth", "true");
-            loadData();
-        } else { document.getElementById('error').innerText = "Dogoggora!"; }
+            sessionStorage.setItem("ams_full_auth", "true");
+            loadData(activeFolder);
+        } else { document.getElementById('error').innerText = "Crendentials dogoggora!"; }
     }
 
     function showP(pId, bId) {
@@ -177,6 +159,41 @@
         document.getElementById(bId).classList.add('active');
     }
 
+    // Folder Logic
+    function switchFolder(folder, btnId) {
+        saveData(); // Save current before switch
+        activeFolder = folder;
+        document.querySelectorAll('.f-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(btnId).classList.add('active');
+        document.getElementById('folder-title').innerText = folder + " Notebook";
+        loadData(folder);
+    }
+
+    // Sketch Pad Logic (Samsung A14 Touch Friendly)
+    const canvas = document.getElementById('circuitCanvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = 400; }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    canvas.addEventListener('touchstart', (e) => { drawing = true; ctx.beginPath(); e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchend', () => { drawing = false; });
+    canvas.addEventListener('touchmove', (e) => {
+        if(!drawing) return;
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        ctx.stroke();
+        e.preventDefault();
+    }, {passive: false});
+
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    // Calculations
     function calcO() {
         let v = document.getElementById('v').value, i = document.getElementById('i').value, r = document.getElementById('r').value;
         if(i && r && !v) document.getElementById('v').value = (i * r).toFixed(2);
@@ -186,38 +203,42 @@
 
     function cableSize() {
         let a = document.getElementById('ampIn').value;
-        let s = a <= 15 ? "1.5" : a <= 22 ? "2.5" : a <= 30 ? "4.0" : a <= 45 ? "6.0" : "10.0+";
-        document.getElementById('cableRes').innerText = "Size: " + s + " mm²";
+        let s = a <= 15 ? "1.5" : a <= 22 ? "2.5" : a <= 32 ? "4.0" : a <= 45 ? "6.0" : "10.0+";
+        document.getElementById('cableRes').innerText = "Recommended: " + s + " mm²";
     }
 
     function calcConst() {
         let ar = document.getElementById('area').value, de = document.getElementById('depth').value;
-        let v = ar * de;
-        let b = Math.ceil(v * 6.5);
-        document.getElementById('constRes').innerText = `Volume: ${v.toFixed(2)} m³ | Cement: ${b} Bags`;
+        let vol = ar * de;
+        document.getElementById('constRes').innerText = `Volume: ${vol.toFixed(2)} m³ | Cement: ${Math.ceil(vol * 6.5)} Bags`;
     }
 
     function logToNotebook() {
         const v = document.getElementById('mv').value, i = document.getElementById('mi').value, r = document.getElementById('mr').value;
-        const entry = `<div style="border-left:5px solid blue; padding:10px; margin:10px 0; background:#f1f5f9;">
-            <b>LOG:</b> ${v}V | ${i}A | ${r}Ω</div>`;
+        const entry = `<div style="border-left:5px solid var(--primary); padding:10px; margin:10px 0; background:#f8fafc;">
+            <b>LOG [${new Date().toLocaleTimeString()}]:</b> ${v}V | ${i}A | ${r}Ω </div>`;
         document.getElementById('nb-area').innerHTML += entry;
-        alert("Log added!");
+        alert("Added to Notebook!");
         showP('p1', 'b1');
     }
 
+    // Cloud Data
     function saveData() {
         const data = document.getElementById('nb-area').innerHTML;
-        db.ref('ams_mobile_final').set(data).then(() => alert("Saved! ✅"));
+        db.ref('ams_v6/' + activeFolder).set(data).then(() => {
+            console.log("Auto-saved " + activeFolder);
+        });
     }
 
-    function loadData() {
-        db.ref('ams_mobile_final').on('value', (s) => { if(s.val()) document.getElementById('nb-area').innerHTML = s.val(); });
+    function loadData(folder) {
+        db.ref('ams_v6/' + folder).once('value', (s) => {
+            document.getElementById('nb-area').innerHTML = s.val() || `<h3>${folder} Notebook</h3><hr><p>Barreeffama haaraa jalqabi...</p>`;
+        });
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
 
-    window.onload = () => { if(sessionStorage.getItem("ams_final_auth") === "true") checkLogin(); };
+    window.onload = () => { if(sessionStorage.getItem("ams_full_auth") === "true") checkLogin(); };
 </script>
 </body>
 </html>
